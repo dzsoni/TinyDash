@@ -181,7 +181,7 @@ var TD = {};
       c.width = c.clientWidth;
       c.height = c.clientHeight;
       var s = Math.min(c.width,c.height);
-      ctx.lineCap="round";
+      ctx.lineCap="square";
       ctx.clearRect(0,0,c.width,c.height);
       ctx.beginPath();
       ctx.lineWidth=20;
@@ -222,8 +222,8 @@ var TD = {};
       // Draw pointer
       ctx.beginPath();
       ctx.lineWidth = 3;
-      ctx.strokeStyle = "#F00"; // Red color for the pointer
-      var v_normalized = (el.value - min) / (max - min); // Recalculate v
+      ctx.strokeStyle = "#000"; 
+      var v_normalized = (el.value - min) / (max - min);
       if (v_normalized < 0) v_normalized = 0;
       if (v_normalized > 1) v_normalized = 1;
       var angle = (0.75 + (1.5 * v_normalized)) * Math.PI;
@@ -235,6 +235,13 @@ var TD = {};
       ctx.moveTo(centerX, centerY);
       ctx.lineTo(pointerX, pointerY);
       ctx.stroke();
+
+      // Draw center circle
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 5, 0, 2 * Math.PI); 
+      ctx.fillStyle = "#000"; 
+      ctx.fill();
+      
     }
     setTimeout(draw,100);
     el.onresize = draw;

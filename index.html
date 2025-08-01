@@ -28,11 +28,7 @@
        // Update pointer gauge value between 0 and 100
        var newPointerValue = 50 + 50 * Math.sin(Date.now() / 1000);
        TD.update({pointer_gauge : newPointerValue});
-       // Update original gauge value between 0 and 100
-       var newOriginalValue = 50 + 50 * Math.cos(Date.now() / 1000);
-       TD.update({original_gauge : newOriginalValue});
-       // Update second pointer gauge
-       TD.update({pointer_gauge2 : newPointerValue});
+       TD.update({original_gauge : newPointerValue});
      }, 100);
      //TD.startEditor();
    </script>
