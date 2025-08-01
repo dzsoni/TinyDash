@@ -111,7 +111,7 @@ body {
 }
 .td_gauge_a {
   position: absolute;
-  left: 0px; right: 0px; top: 85%; 
+  left: 0px; right: 0px; top: 88%; 
   font-size: 25px; 
   color: #09F;
   transform: translateY(-50%); 
