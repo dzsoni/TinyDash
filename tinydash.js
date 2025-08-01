@@ -188,20 +188,53 @@ var TD = {};
       ctx.strokeStyle = "#000";
       ctx.arc(c.width/2, c.height/2+20, (s/2)-24, Math.PI*0.75, 2.25 * Math.PI);
       ctx.stroke();
+      var color1 = opts.color1 || "#0F0"; // Default green
+      var color2 = opts.color2 || "#FF0"; // Default yellow
+      var color3 = opts.color3 || "#F00"; // Default red
+
+      var ratio1 = opts.ratio1 || 1;
+      var ratio2 = opts.ratio2 || 1;
+      var ratio3 = opts.ratio3 || 1;
+      var totalRatio = ratio1 + ratio2 + ratio3;
+
+      // Calculate angles for the three segments
+      var startAngle = Math.PI * 0.75;
+      var endAngle = Math.PI * 2.25;
+      var totalArcAngle = endAngle - startAngle;
+
+      var segment1Angle = (ratio1 / totalRatio) * totalArcAngle;
+      var segment2Angle = (ratio2 / totalRatio) * totalArcAngle;
+      var segment3Angle = (ratio3 / totalRatio) * totalArcAngle;
+
+      // Draw segment 1 (color1)
       ctx.beginPath();
-      ctx.lineWidth=16;
-      ctx.strokeStyle = LIGHTCOL;
-      var v = (el.value-min) / (max-min);
-      if (v<0) v=0;
-      if (v>1) v=1;
-      ctx.arc(c.width/2, c.height/2+20, (s/2)-24, Math.PI*0.75, (0.75+(1.5*v))*Math.PI);
+      ctx.lineWidth = 16;
+      ctx.strokeStyle = color1;
+      ctx.arc(c.width/2, c.height/2+20, (s/2)-24, startAngle, startAngle + segment1Angle);
+      ctx.stroke();
+
+      // Draw segment 2 (color2)
+      ctx.beginPath();
+      ctx.lineWidth = 16;
+      ctx.strokeStyle = color2;
+      ctx.arc(c.width/2, c.height/2+20, (s/2)-24, startAngle + segment1Angle, startAngle + segment1Angle + segment2Angle);
+      ctx.stroke();
+
+      // Draw segment 3 (color3)
+      ctx.beginPath();
+      ctx.lineWidth = 16;
+      ctx.strokeStyle = color3;
+      ctx.arc(c.width/2, c.height/2+20, (s/2)-24, startAngle + segment1Angle + segment2Angle, endAngle);
       ctx.stroke();
 
       // Draw pointer
       ctx.beginPath();
       ctx.lineWidth = 3;
       ctx.strokeStyle = "#F00"; // Red color for the pointer
-      var angle = (0.75 + (1.5 * v)) * Math.PI;
+      var v_normalized = (el.value - min) / (max - min); // Recalculate v
+      if (v_normalized < 0) v_normalized = 0;
+      if (v_normalized > 1) v_normalized = 1;
+      var angle = (0.75 + (1.5 * v_normalized)) * Math.PI;
       var pointerLength = (s / 2) - 24;
       var centerX = c.width / 2;
       var centerY = c.height / 2 + 20;
