@@ -111,9 +111,10 @@ body {
 }
 .td_gauge_a {
   position: absolute;
-  left: 0px; right: 0px; top: 50%;
-  font-size: 40px;
+  left: 0px; right: 0px; top: 85%; 
+  font-size: 25px; 
   color: #09F;
+  transform: translateY(-50%); 
 }
 .td_graph {
   text-align: center;
