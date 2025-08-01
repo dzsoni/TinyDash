@@ -168,63 +168,7 @@ var TD = {};
     };
     return el;
   };
-  /* {label,value,min,max}*/
-  TD.pointerGauge = function(opts) {
-    var v = (opts.value===undefined)?0:opts.value;
-    var min = (opts.min===undefined)?0:opts.min;
-    var max = (opts.max===undefined)?1:opts.max;
-    var el = setup("pointerGauge",opts,toElement('<div class="td td_gauge"><span>'+opts.label+'</span><canvas></canvas><div class="td_gauge_a">'+v+'</div></div>'));
-    el.value = v;
-    var c = el.getElementsByTagName("canvas")[0];
-    var ctx = c.getContext("2d");
-    function draw() {
-      c.width = c.clientWidth;
-      c.height = c.clientHeight;
-      var s = Math.min(c.width,c.height);
-      var cx = c.width/2;
-      var cy = c.height/2+20; // Adjusted for label
-      var radius = (s/2)-24;
-
-      ctx.lineCap="round";
-      ctx.clearRect(0,0,c.width,c.height);
-
-      // Draw gauge background
-      ctx.beginPath();
-      ctx.lineWidth=20;
-      ctx.strokeStyle = "#000";
-      ctx.arc(cx, cy, radius, Math.PI*0.75, 2.25 * Math.PI);
-      ctx.stroke();
-
-      // Calculate pointer angle
-      var normalizedValue = (el.value-min) / (max-min);
-      if (normalizedValue<0) normalizedValue=0;
-      if (normalizedValue>1) normalizedValue=1;
-      // Map normalizedValue (0 to 1) to angle (0.75*PI to 2.25*PI)
-      var angle = Math.PI*0.75 + normalizedValue * (1.5 * Math.PI);
-
-      // Draw pointer
-      ctx.beginPath();
-      ctx.lineWidth=3;
-      ctx.strokeStyle = LIGHTCOL;
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(cx + radius * Math.cos(angle), cy + radius * Math.sin(angle));
-      ctx.stroke();
-
-      // Draw center circle
-      ctx.beginPath();
-      ctx.arc(cx, cy, 5, 0, 2 * Math.PI);
-      ctx.fillStyle = LIGHTCOL;
-      ctx.fill();
-    }
-    setTimeout(draw,100);
-    el.onresize = draw;
-    el.setValue = function(v) {
-      el.value = v;
-      el.getElementsByClassName("td_gauge_a")[0].innerHTML = formatText(v);
-      draw();
-    };
-  };
-   /*{label
+  /* {label
       gridy - optional - grid value for y. Also enables labels on axis
       ylabel - optional - function(y_value) to format y axis labels, eg: function(y) { return y.toFixed(1); }
       gridx - optional - grid value for x. Also enables labels on axis
