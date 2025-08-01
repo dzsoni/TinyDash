@@ -188,44 +188,36 @@ var TD = {};
       ctx.strokeStyle = "#000";
       ctx.arc(c.width/2, c.height/2+20, (s/2)-24, Math.PI*0.75, 2.25 * Math.PI);
       ctx.stroke();
-      var color1 = opts.color1 || "#0F0"; // Default green
-      var color2 = opts.color2 || "#FF0"; // Default yellow
-      var color3 = opts.color3 || "#F00"; // Default red
+      var colors = opts.colors || ["#0F0", "#FF0", "#F00"]; // Default colors
+      var ratios = opts.ratios || []; // Default to empty array if not provided
 
-      var ratio1 = opts.ratio1 || 1;
-      var ratio2 = opts.ratio2 || 1;
-      var ratio3 = opts.ratio3 || 1;
-      var totalRatio = ratio1 + ratio2 + ratio3;
+      // Determine the actual number of segments to draw
+      var numSegments = Math.min(colors.length, ratios.length > 0 ? ratios.length : colors.length);
 
-      // Calculate angles for the three segments
+      // If ratios are not explicitly provided or are insufficient, fill with 1s up to numSegments
+      var effectiveRatios = [];
+      for (var i = 0; i < numSegments; i++) {
+        effectiveRatios.push(ratios[i] !== undefined ? ratios[i] : 1);
+      }
+
+      var totalRatio = effectiveRatios.reduce((sum, r) => sum + r, 0);
+      if (totalRatio === 0) totalRatio = numSegments > 0 ? numSegments : 1; // Avoid division by zero if all ratios are 0 or no segments
+
+      // Calculate angles for the segments
       var startAngle = Math.PI * 0.75;
       var endAngle = Math.PI * 2.25;
       var totalArcAngle = endAngle - startAngle;
 
-      var segment1Angle = (ratio1 / totalRatio) * totalArcAngle;
-      var segment2Angle = (ratio2 / totalRatio) * totalArcAngle;
-      var segment3Angle = (ratio3 / totalRatio) * totalArcAngle;
-
-      // Draw segment 1 (color1)
-      ctx.beginPath();
-      ctx.lineWidth = 16;
-      ctx.strokeStyle = color1;
-      ctx.arc(c.width/2, c.height/2+20, (s/2)-24, startAngle, startAngle + segment1Angle);
-      ctx.stroke();
-
-      // Draw segment 2 (color2)
-      ctx.beginPath();
-      ctx.lineWidth = 16;
-      ctx.strokeStyle = color2;
-      ctx.arc(c.width/2, c.height/2+20, (s/2)-24, startAngle + segment1Angle, startAngle + segment1Angle + segment2Angle);
-      ctx.stroke();
-
-      // Draw segment 3 (color3)
-      ctx.beginPath();
-      ctx.lineWidth = 16;
-      ctx.strokeStyle = color3;
-      ctx.arc(c.width/2, c.height/2+20, (s/2)-24, startAngle + segment1Angle + segment2Angle, endAngle);
-      ctx.stroke();
+      var currentAngle = startAngle;
+      for (var i = 0; i < numSegments; i++) {
+        var segmentAngle = (effectiveRatios[i] / totalRatio) * totalArcAngle;
+        ctx.beginPath();
+        ctx.lineWidth = 16;
+        ctx.strokeStyle = colors[i];
+        ctx.arc(c.width/2, c.height/2+20, (s/2)-24, currentAngle, currentAngle + segmentAngle);
+        ctx.stroke();
+        currentAngle += segmentAngle;
+      }
 
       // Draw pointer
       ctx.beginPath();

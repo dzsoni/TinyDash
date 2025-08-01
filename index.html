@@ -15,7 +15,7 @@
        t:TD.toggle({x:10,y:150,width:200,height:60,label:"Toggle",value:1,name:"toggle"}),
        v:TD.value({x:10,y:220,width:200,height:60,label:"Value",value:"1.234"}),
        b:TD.button({x:10,y:290,width:200,height:100,label:"Press Me",value:0,name:"button",onchange:function(e){o.log.log("Pressed!");}}),
-       g:TD.pointer_gauge({x:220,y:400,width:200,height:200,label:"Pointer Gauge",value:25,min:0,max:100,name:"pointer_gauge",color1:"#00FF00",color2:"#FFFF00",color3:"#FF0000",ratio1:1,ratio2:2,ratio3:1}),
+       g:TD.pointer_gauge({x:220,y:400,width:200,height:200,label:"Pointer Gauge",value:25,min:0,max:100,name:"pointer_gauge",colors:["#00FF00","#FFFF00","#FF0000"],ratios:[1,2,1]}),
        g2:TD.gauge({x:220,y:10,width:200,height:200,label:"Original Gauge",value:25,min:0,max:100,name:"original_gauge"}),
        gr:TD.graph({x:220,y:220,width:400,height:170,label:"A Graph",data:data}),
        log:TD.log({x:430,y:10,width:190,height:200,label:"A Log",text:"A\nB\nC"}),
@@ -31,6 +31,8 @@
        // Update original gauge value between 0 and 100
        var newOriginalValue = 50 + 50 * Math.cos(Date.now() / 1000);
        TD.update({original_gauge : newOriginalValue});
+       // Update second pointer gauge
+       TD.update({pointer_gauge2 : newPointerValue});
      }, 100);
      //TD.startEditor();
    </script>
