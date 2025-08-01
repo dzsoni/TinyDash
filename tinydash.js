@@ -168,6 +168,58 @@ var TD = {};
     };
     return el;
   };
+/* {label,value,min,max}*/
+  TD.pointer_gauge = function(opts) {
+    var v = (opts.value===undefined)?0:opts.value;
+    var min = (opts.min===undefined)?0:opts.min;
+    var max = (opts.max===undefined)?1:opts.max;
+    var el = setup("gauge",opts,toElement('<div class="td td_gauge"><span>'+opts.label+'</span><canvas></canvas><div class="td_gauge_a">'+v+'</div></div>'));
+    el.value = v;
+    var c = el.getElementsByTagName("canvas")[0];
+    var ctx = c.getContext("2d");
+    function draw() {
+      c.width = c.clientWidth;
+      c.height = c.clientHeight;
+      var s = Math.min(c.width,c.height);
+      ctx.lineCap="round";
+      ctx.clearRect(0,0,c.width,c.height);
+      ctx.beginPath();
+      ctx.lineWidth=20;
+      ctx.strokeStyle = "#000";
+      ctx.arc(c.width/2, c.height/2+20, (s/2)-24, Math.PI*0.75, 2.25 * Math.PI);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.lineWidth=16;
+      ctx.strokeStyle = LIGHTCOL;
+      var v = (el.value-min) / (max-min);
+      if (v<0) v=0;
+      if (v>1) v=1;
+      ctx.arc(c.width/2, c.height/2+20, (s/2)-24, Math.PI*0.75, (0.75+(1.5*v))*Math.PI);
+      ctx.stroke();
+
+      // Draw pointer
+      ctx.beginPath();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#F00"; // Red color for the pointer
+      var angle = (0.75 + (1.5 * v)) * Math.PI;
+      var pointerLength = (s / 2) - 24;
+      var centerX = c.width / 2;
+      var centerY = c.height / 2 + 20;
+      var pointerX = centerX + pointerLength * Math.cos(angle);
+      var pointerY = centerY + pointerLength * Math.sin(angle);
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(pointerX, pointerY);
+      ctx.stroke();
+    }
+    setTimeout(draw,100);
+    el.onresize = draw;
+    el.setValue = function(v) {
+      el.value = v;
+      el.getElementsByClassName("td_gauge_a")[0].innerHTML = formatText(v);
+      draw();
+    };
+    return el;
+  };
   /* {label
       gridy - optional - grid value for y. Also enables labels on axis
       ylabel - optional - function(y_value) to format y axis labels, eg: function(y) { return y.toFixed(1); }
