@@ -59,7 +59,7 @@ body {
 .td_toggle_a {
   margin-top: 20px;
   margin-left: auto; margin-right: auto; /* centered */
-  border: 2px solid #fff;
+  border: 2px solid #888;
   border-radius: 16px;
   width: 50px;
   height: 28px;
@@ -68,8 +68,8 @@ body {
   background-color: #06B;
 }
 .td_toggle_b {
-  background-color: #fff;
-  border: 2px solid #fff;
+  background-color: #888;
+  border: 2px solid #888;
   border-radius: 8px;
   width: 16px;
   height: 16px;
@@ -77,6 +77,13 @@ body {
 }
 .td_toggle[pressed="1"] .td_toggle_b {
   margin-left: 26px;
+}
+.td_toggle[pressed="1"] .td_toggle_a {
+  border: 2px solid #fff;
+}
+.td_toggle[pressed="1"] .td_toggle_b {
+  background-color: #fff;
+  border: 2px solid #fff;
 }
 .td_val {
   text-align: center;
