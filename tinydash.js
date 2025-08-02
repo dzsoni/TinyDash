@@ -188,7 +188,7 @@ var TD = {};
       ctx.strokeStyle = "#000";
       ctx.arc(c.width/2, c.height/2+20, (s/2)-24, Math.PI*0.75, 2.25 * Math.PI);
       ctx.stroke();
-      var colors = opts.colors || ["#0F0", "#FF0", "#F00"]; // Default colors
+      var colors = opts.colors || ["#4DDB67", "#D4DB4D", "#DB4D4D"]; // Default colors
       var ratios = opts.ratios || []; // Default to empty array if not provided
 
       // Determine the actual number of segments to draw
