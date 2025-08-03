@@ -11,6 +11,42 @@
 var TD = {};
 (function() {
   var LIGHTCOL = "#09F";
+  const API_BASE_URL = "/tinydash"; // Base URL for TinyDash REST API
+
+  async function fetchData(endpoint) {
+      try {
+          const response = await fetch(`${API_BASE_URL}/${endpoint}`);
+          if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          return data;
+      } catch (error) {
+          console.error('Error fetching data:', error);
+          return null;
+      }
+  }
+
+  async function sendCommand(endpoint, method, payload) {
+      try {
+          const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+              method: method,
+              headers: {
+                  'Content-Type': 'application/x-www-form-urlencoded'
+              },
+              body: new URLSearchParams(payload).toString()
+          });
+          if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const result = await response.json();
+          return result;
+      } catch (error) {
+          console.error('Error sending command:', error);
+          return null;
+      }
+  }
+
   function toElement(html) {
     var div = document.createElement('div');
     div.innerHTML = html;
@@ -53,8 +89,9 @@ var TD = {};
     el.opts = opts;
     return el;
   }
-  function handleChange(data) {
-    console.log("Change", data);
+  async function handleChange(data) {
+    console.log("Sending change:", data);
+    await sendCommand("update", "POST", data);
   }
 
   // --------------------------------------------------------------------------
@@ -388,3 +425,11 @@ var TD = {};
   };
 
 })();
+
+// Basic polling mechanism for dashboard data
+setInterval(async () => {
+  const data = await fetchData("data");
+  if (data) {
+    TD.update(data);
+  }
+}, 2000); // Poll every 2 seconds (adjust as needed)
