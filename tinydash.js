@@ -137,11 +137,123 @@ var TD = {};
     };
     return el;
   };
-  /* {label,value,step,min,max}
-    if step is specified, clickable up/down arrows are added */
+  /* {label,value,step,min,max,slider}
+     slider - optional - "vertical" or "horizontal" to render a slider control
+  */
   TD.value = function(opts) {
-    var html;
+    // normalize numeric value
     opts.value = parseFloat(opts.value);
+  
+    // helper to clamp numerical bounds
+    var clamp = function(v) {
+      if (opts.min !== undefined && v < opts.min) v = opts.min;
+      if (opts.max !== undefined && v > opts.max) v = opts.max;
+      return v;
+    };
+  
+    // If slider is requested, render custom slider UI
+    if (opts.slider) {
+      var orient = (opts.slider === "horizontal") ? "h" : "v";
+      var html = '<div class="td_slider td_slider_' + orient + '">'
+               +   '<div class="td_slider_track"></div>'
+               +   '<div class="td_slider_thumb"></div>'
+               + '</div>'
+               + '<div class="td_val_a"></div>';
+      var el = setup("value", opts, toElement('<div class="td td_val td_val_slider"><span>'+opts.label+'</span>'+html+'</div>'));
+  
+      var track = el.getElementsByClassName("td_slider_track")[0];
+      var thumb = el.getElementsByClassName("td_slider_thumb")[0];
+      var display = el.getElementsByClassName("td_val_a")[0];
+  
+      function valueFromPos(clientX, clientY) {
+        var r = track.getBoundingClientRect();
+        var pct;
+        if (orient === "h") {
+          pct = (clientX - r.left) / r.width;
+        } else {
+          // vertical: top = max, bottom = min (we invert so bottom = 0%)
+          pct = 1 - (clientY - r.top) / r.height;
+        }
+        if (pct < 0) pct = 0;
+        if (pct > 1) pct = 1;
+        var min = (opts.min === undefined) ? 0 : opts.min;
+        var max = (opts.max === undefined) ? 1 : opts.max;
+        return min + pct * (max - min);
+      }
+  
+      function updateThumb(v) {
+        var min = (opts.min === undefined) ? 0 : opts.min;
+        var max = (opts.max === undefined) ? 1 : opts.max;
+        var pct = (v - min) / (max - min);
+        if (pct < 0) pct = 0;
+        if (pct > 1) pct = 1;
+        if (orient === "h") {
+          thumb.style.left = (pct * 100) + "%";
+          thumb.style.bottom = ""; // reset vertical prop
+          thumb.style.top = "50%";
+          thumb.style.transform = "translate(-50%, -50%)";
+        } else {
+          thumb.style.bottom = (pct * 100) + "%";
+          thumb.style.left = "50%";
+          thumb.style.transform = "translate(-50%, 50%)";
+        }
+        display.innerHTML = formatText(v);
+      }
+  
+      // Drag handling (mouse + touch)
+      var dragging = false;
+      function start(e) {
+        e.preventDefault();
+        dragging = true;
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', end);
+        document.addEventListener('touchmove', move, {passive:false});
+        document.addEventListener('touchend', end);
+        var p = (e.touches && e.touches[0]) || e;
+        var v = valueFromPos(p.clientX, p.clientY);
+        if (opts.step) v = Math.round(v / opts.step) * opts.step;
+        el.setValue(clamp(v));
+      }
+      function move(e) {
+        if (!dragging) return;
+        e.preventDefault();
+        var p = (e.touches && e.touches[0]) || e;
+        var v = valueFromPos(p.clientX, p.clientY);
+        if (opts.step) v = Math.round(v / opts.step) * opts.step;
+        el.setValue(clamp(v));
+      }
+      function end() {
+        dragging = false;
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', end);
+        document.removeEventListener('touchmove', move);
+        document.removeEventListener('touchend', end);
+      }
+  
+      // start drag on track or thumb
+      track.addEventListener('mousedown', start);
+      thumb.addEventListener('mousedown', start);
+      track.addEventListener('touchstart', start, {passive:false});
+      thumb.addEventListener('touchstart', start, {passive:false});
+  
+      // setValue called by TD.update or interactions
+      el.setValue = function(v) {
+        if (opts.min !== undefined && v < opts.min) v = opts.min;
+        if (opts.max !== undefined && v > opts.max) v = opts.max;
+        if (opts.value != v) {
+          sendChanges(el, v);
+          opts.value = v;
+        }
+        updateThumb(v);
+      };
+  
+      // initialize
+      el.setValue(opts.value === undefined ? (opts.min || 0) : opts.value);
+      return el;
+    }
+  
+    // Fallback: original (arrow-based) value widget behavior
+    var html;
     if (opts.step)
       html = '<div class="td_val_b">&#9664;</div><div class="td_val_a"></div><div class="td_val_b">&#9654;</div>';
     else html = '<div class="td_val_a"></div>';
