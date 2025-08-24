@@ -92,7 +92,7 @@ body {
   text-align: center;
 }
 .td_val div {
-  display:block;
+  display:inline-block;
 }
 .td_val_a {
   margin-top: 20px;
@@ -154,26 +154,3 @@ body {
   transform: translate(-50%, -50%);
   font-size: 40px;
 }
-
-/* Slider styles for TinyDash - added for vertical/horizontal sliders */
-.td_val_slider { display:flex; align-items:center; justify-content:center; flex-direction:column; position:relative; }
-.td_slider { position:relative; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
-.td_slider_track { background:#000; border-radius:8px; position:absolute; z-index:1; }
-.td_slider_thumb { position:absolute; width:20px; height:20px; background:#09F; border-radius:50%; box-shadow:0 2px 4px rgba(0,0,0,0.4); cursor:pointer; z-index:2; }
-
-/* vertical */
-.td_slider_v { width:34px; height:100%; margin:6px auto; display:block; position:relative; }
-.td_slider_v .td_slider_track { width:6px; left:50%; top:6px; bottom:6px; transform:translateX(-50%); }
-.td_slider_v .td_slider_thumb { left:50%; transform:translate(-50%,50%); }
-
-/* horizontal */
-.td_slider_h { width:85%; height:34px; margin-top:12px; display:block; position:relative; }
-.td_slider_h .td_slider_track { height:6px; left:6px; right:6px; top:50%; transform:translateY(-50%); }
-.td_slider_h .td_slider_thumb { top: 50%; transform:translate(-50%,-50%); }
-
-/* Ensure thumbs are centered on track and can be moved with JS setting left/top/bottom */
-.td_slider_v .td_slider_thumb,
-.td_slider_h .td_slider_thumb { pointer-events: auto; }
-
-/* Make sure the value display lines up nicely with sliders */
-.td_val_slider .td_val_a { margin-top: 6px;  }
