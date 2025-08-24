@@ -67,6 +67,9 @@ body {
 .td_toggle_a:hover {
   background-color: #06B;
 }
+.td_toggle_b:hover {
+  background-color: #06B;
+}
 .td_toggle_b {
   background-color: #888;
   border: 2px solid #888;
@@ -79,11 +82,11 @@ body {
   margin-left: 26px;
 }
 .td_toggle[pressed="1"] .td_toggle_a {
-  border: 2px solid #fff;
+  border: 2px solid #06b;
 }
 .td_toggle[pressed="1"] .td_toggle_b {
-  background-color: #fff;
-  border: 2px solid #fff;
+  background-color: #06b;
+  border: 2px solid #06b;
 }
 .td_val {
   text-align: center;
