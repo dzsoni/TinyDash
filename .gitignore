@@ -1,6 +1,6 @@
-.svn
-.pio
-.vscode
+/.svn
+/.pio
+/.vscode
 .idea
 workspace.code-workspace
 /.idea
