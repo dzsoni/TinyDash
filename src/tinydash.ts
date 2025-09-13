@@ -1,4 +1,6 @@
 /* Copyright (c) 2017, Gordon Williams, MPLv2 License. https://github.com/espruino/TinyDash */
+
+
 /* All elements have x/y/width/height,name
 
   Elements that can be changed can also have `onchanged`
@@ -76,11 +78,27 @@ interface TDElement extends HTMLElement {
   pressed?: boolean;
   toggle?: boolean;
   value?: number;
+  min?: number;
+  max?: number;
+  step?: number;
   update?: () => void;
   log?: (txt: string) => void;
   clear?: () => void;
   draw?: () => void;
   setData?: (d: any[] | { [key: string]: number }[]) => void;
+}
+
+function createBaseElement(type: string, opts: BaseElementOptions): TDElement {
+  const element = document.createElement('div') as any as TDElement;
+  element.classList.add("td", `td_${type}`);
+  element.style.width = `${opts.width}px`;
+  element.style.height = `${opts.height}px`;
+  element.style.left = `${opts.x}px`;
+  element.style.top = `${opts.y}px`;
+  element.style.position = 'absolute';
+  element.type = type;
+  element.opts = opts;
+  return element;
 }
 
 class TD {
@@ -95,39 +113,39 @@ class TD {
   }
 
   static label(opts: LabelOptions): TDElement {
-    return new LabelElement(opts);
+    return createLabelElement(opts);
   }
 
   static button(opts: ButtonOptions): TDElement {
-    return new ButtonElement(opts);
+    return createButtonElement(opts);
   }
 
   static toggle(opts: ToggleOptions): TDElement {
-    return new ToggleElement(opts);
+    return createToggleElement(opts);
   }
 
   static value(opts: ValueOptions): TDElement {
-    return new ValueElement(opts);
+    return createValueElement(opts);
   }
 
   static gauge(opts: GaugeOptions): TDElement {
-    return new GaugeElement(opts);
+    return createGaugeElement(opts);
   }
 
   static pointer_gauge(opts: GaugeOptions): TDElement {
-    return new PointerGaugeElement(opts);
+    return createPointerGaugeElement(opts);
   }
 
   static graph(opts: GraphOptions): TDElement {
-    return new GraphElement(opts);
+    return createGraphElement(opts);
   }
 
   static log(opts: LogOptions): TDElement {
-    return new LogElement(opts);
+    return createLogElement(opts);
   }
 
   static modal(opts: ModalOptions): TDElement {
-    return new ModalElement(opts);
+    return createModalElement(opts);
   }
 }
 
@@ -179,13 +197,27 @@ function sendChanges(el: TDElement, value: any): void {
 }
 
 function togglePressed(el: TDElement): void {
-  el.pressed = !Boolean(el.getAttribute("pressed"));
-  el.setAttribute("pressed", el.pressed ? "1" : "0");
+  el.pressed = !el.pressed;
+  
+  // For toggle elements, set pressed attribute on the inner td_toggle div
+  if (el.type === "toggle") {
+    const toggleDiv = el.getElementsByClassName("td_toggle")[0] as HTMLElement;
+    toggleDiv.setAttribute("pressed", el.pressed ? "1" : "0");
+  } else {
+    // For buttons, set on the outer element
+    el.setAttribute("pressed", el.pressed ? "1" : "0");
+  }
+  
   sendChanges(el, el.pressed);
   if (!el.toggle) {
     el.pressed = false;
     setTimeout(function() {
-      el.setAttribute("pressed", "0");
+      if (el.type === "toggle") {
+        const toggleDiv = el.getElementsByClassName("td_toggle")[0] as HTMLElement;
+        toggleDiv.setAttribute("pressed", "0");
+      } else {
+        el.setAttribute("pressed", "0");
+      }
     }, 200);
   }
 }
@@ -204,107 +236,77 @@ async function handleChange(data: { [key: string]: any }): Promise<void> {
   await sendCommand("update", "POST", data);
 }
 
-abstract class BaseElement extends HTMLElement implements TDElement {
-  type: string;
-  opts: BaseElementOptions;
-
-  constructor(type: string, opts: BaseElementOptions) {
-    super();
-    this.classList.add("td", `td_${type}`);
-    this.style.width = `${opts.width}px`;
-    this.style.height = `${opts.height}px`;
-    this.style.left = `${opts.x}px`;
-    this.style.top = `${opts.y}px`;
-    this.type = type;
-    this.opts = opts;
-  }
+function createLabelElement(opts: LabelOptions): TDElement {
+  const element = createBaseElement("label", opts);
+  element.innerHTML = `<div class="td_label"><span>${opts.label}</span></div>`;
+  return element;
 }
 
-class LabelElement extends BaseElement {
-  constructor(opts: LabelOptions) {
-    super("label", opts);
-    this.innerHTML = `<div class="td_label"><span>${opts.label}</span></div>`;
-  }
-}
+function createButtonElement(opts: ButtonOptions): TDElement {
+  const element = createBaseElement("button", opts);
+  const pressed = opts.value ? 1 : 0;
+  const glyph = opts.glyph || "&#x1f4a1;";
+  element.innerHTML = `<div class="td_btn" pressed="${pressed}"><span>${opts.label}</span><div class="td_btn_a">${glyph}</div></div>`;
+  element.pressed = Boolean(pressed);
+  element.toggle = opts.toggle;
 
-class ButtonElement extends BaseElement {
-  pressed: boolean;
-  toggle?: boolean;
+  const btnA = element.getElementsByClassName("td_btn_a")[0] as HTMLElement;
+  btnA.onclick = () => togglePressed(element);
 
-  constructor(opts: ButtonOptions) {
-    super("button", opts);
-    const pressed = opts.value ? 1 : 0;
-    const glyph = opts.glyph || "&#x1f4a1;";
-    this.innerHTML = `<div class="td_btn" pressed="${pressed}"><span>${opts.label}</span><div class="td_btn_a">${glyph}</div></div>`;
-    this.pressed = Boolean(pressed);
-    this.toggle = opts.toggle;
-
-    const btnA = this.getElementsByClassName("td_btn_a")[0] as HTMLElement;
-    btnA.onclick = () => togglePressed(this);
-  }
-
-  setValue(v: boolean): void {
+  element.setValue = function(v: boolean): void {
     this.pressed = v;
     this.setAttribute("pressed", this.pressed ? "1" : "0");
-  }
+  };
+
+  return element;
 }
 
-class ToggleElement extends BaseElement {
-  pressed: boolean = false;
-  toggle = true;
+function createToggleElement(opts: ToggleOptions): TDElement {
+  const element = createBaseElement("toggle", opts);
+  const pressed = opts.value ? 1 : 0;
+  element.innerHTML = `<div class="td_toggle" pressed="${pressed}"><span>${opts.label}</span><div class="td_toggle_a"><div class="td_toggle_b"></div></div></div>`;
+  element.pressed = Boolean(pressed);
+  element.toggle = true;
 
-  constructor(opts: ToggleOptions) {
-    super("toggle", opts);
-    const pressed = opts.value ? 1 : 0;
-    this.innerHTML = `<div class="td_toggle" pressed="${pressed}"><span>${opts.label}</span><div class="td_toggle_a"><div class="td_toggle_b"></div></div></div>`;
-    this.pressed = Boolean(pressed);
+  const toggleA = element.getElementsByClassName("td_toggle_a")[0] as HTMLElement;
+  toggleA.onclick = () => togglePressed(element);
 
-    const toggleA = this.getElementsByClassName("td_toggle_a")[0] as HTMLElement;
-    toggleA.onclick = () => togglePressed(this);
-  }
-
-  setValue(v: boolean): void {
+  element.setValue = function(v: boolean): void {
     this.pressed = v;
-    this.setAttribute("pressed", this.pressed ? "1" : "0");
-  }
+    const toggleDiv = this.getElementsByClassName("td_toggle")[0] as HTMLElement;
+    toggleDiv.setAttribute("pressed", this.pressed ? "1" : "0");
+  };
+
+  return element;
 }
 
-class ValueElement extends BaseElement {
-  value: number;
-  min?: number;
-  max?: number;
-  step?: number;
+function createValueElement(opts: ValueOptions): TDElement {
+  const element = createBaseElement("value", opts);
+  const valueOpts = element.opts as ValueOptions;
+  element.value = parseFloat(String(valueOpts.value));
+  element.min = valueOpts.min;
+  element.max = valueOpts.max;
+  element.step = valueOpts.step;
 
-  constructor(opts: ValueOptions) {
-    super("value", opts);
-    const valueOpts = this.opts as ValueOptions;
-    this.value = parseFloat(String(valueOpts.value));
-    this.min = valueOpts.min;
-    this.max = valueOpts.max;
-    this.step = valueOpts.step;
+  let html: string;
+  if (element.step !== undefined) {
+    html = '<div class="td_val_b">&#9664;</div><div class="td_val_a"></div><div class="td_val_b">&#9654;</div>';
+  } else {
+    html = '<div class="td_val_a"></div>';
+  }
+  element.innerHTML = `<div class="td_val"><span>${valueOpts.label}</span>${html}</div>`;
 
-    let html: string;
-    if (this.step !== undefined) {
-      html = '<div class="td_val_b">&#9664;</div><div class="td_val_a"></div><div class="td_val_b">&#9654;</div>';
-    } else {
-      html = '<div class="td_val_a"></div>';
-    }
-    this.innerHTML = `<div class="td_val"><span>${valueOpts.label}</span>${html}</div>`;
-
-    if (this.step !== undefined) {
-      const b = this.getElementsByClassName("td_val_b") as HTMLCollectionOf<HTMLElement>;
-      b[0].onclick = (e: MouseEvent) => {
-        this.setValue(this.value - (this.step!));
-      };
-      b[1].onclick = (e: MouseEvent) => {
-        this.setValue(this.value + (this.step!));
-      };
-    }
-
-    this.setValue(this.value);
+  if (element.step !== undefined) {
+    const b = element.getElementsByClassName("td_val_b") as HTMLCollectionOf<HTMLElement>;
+    b[0].onclick = () => {
+      element.setValue!(element.value! - element.step!);
+    };
+    b[1].onclick = () => {
+      element.setValue!(element.value! + element.step!);
+    };
   }
 
-  setValue(v: number): void {
+  element.setValue = function(v: number): void {
     if (this.min !== undefined && v < this.min) v = this.min;
     if (this.max !== undefined && v > this.max) v = this.max;
     if (this.value !== v) {
@@ -313,105 +315,91 @@ class ValueElement extends BaseElement {
     }
     const valA = this.getElementsByClassName("td_val_a")[0] as HTMLElement;
     valA.innerHTML = formatText(v);
-  }
+  };
+
+  element.setValue(element.value);
+  return element;
 }
 
-class GaugeElement extends BaseElement {
-  value: number = 0;
-  min: number = 0;
-  max: number = 1;
+function createGaugeElement(opts: GaugeOptions): TDElement {
+  const element = createBaseElement("gauge", opts);
+  const gaugeOpts = element.opts as GaugeOptions;
+  element.value = (gaugeOpts.value === undefined) ? 0 : gaugeOpts.value;
+  element.min = (gaugeOpts.min === undefined) ? 0 : gaugeOpts.min;
+  element.max = (gaugeOpts.max === undefined) ? 1 : gaugeOpts.max;
+  element.innerHTML = `<div class="td_gauge"><span>${gaugeOpts.label}</span><canvas></canvas><div class="td_gauge_a">${formatText(element.value!)}</div></div>`;
+  
+  const canvas = element.getElementsByTagName("canvas")[0] as HTMLCanvasElement;
+  const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
-
-  constructor(opts: GaugeOptions) {
-    super("gauge", opts);
-    const gaugeOpts = this.opts as GaugeOptions;
-    this.value = (gaugeOpts.value === undefined) ? 0 : gaugeOpts.value;
-    this.min = (gaugeOpts.min === undefined) ? 0 : gaugeOpts.min;
-    this.max = (gaugeOpts.max === undefined) ? 1 : gaugeOpts.max;
-    this.innerHTML = `<div class="td_gauge"><span>${gaugeOpts.label}</span><canvas></canvas><div class="td_gauge_a">${formatText(this.value)}</div></div>`;
-    this.canvas = this.getElementsByTagName("canvas")[0] as HTMLCanvasElement;
-    this.ctx = this.canvas.getContext("2d") as CanvasRenderingContext2D;
-
-    setTimeout(() => this.draw(), 100);
-    this.onresize = () => this.draw();
-  }
-
-  draw(): void {
-    this.canvas.width = this.canvas.clientWidth;
-    this.canvas.height = this.canvas.clientHeight;
-    const s = Math.min(this.canvas.width, this.canvas.height);
-    this.ctx.lineCap = "round";
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.ctx.beginPath();
-    this.ctx.lineWidth = 20;
-    this.ctx.strokeStyle = "#000";
-    this.ctx.arc(this.canvas.width / 2, this.canvas.height / 2 + 20, (s / 2) - 24, Math.PI * 0.75, 2.25 * Math.PI);
-    this.ctx.stroke();
-    this.ctx.beginPath();
-    this.ctx.lineWidth = 16;
-    this.ctx.strokeStyle = "#09F";
-    let normalizedV = ((this.value || 0) - this.min) / (this.max - this.min);
+  element.draw = function(): void {
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+    const s = Math.min(canvas.width, canvas.height);
+    ctx.lineCap = "round";
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.lineWidth = 20;
+    ctx.strokeStyle = "#000";
+    ctx.arc(canvas.width / 2, canvas.height / 2 + 20, (s / 2) - 24, Math.PI * 0.75, 2.25 * Math.PI);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.lineWidth = 16;
+    ctx.strokeStyle = "#09F";
+    let normalizedV = ((this.value || 0) - this.min!) / (this.max! - this.min!);
     if (normalizedV < 0) normalizedV = 0;
     if (normalizedV > 1) normalizedV = 1;
-    this.ctx.arc(this.canvas.width / 2, this.canvas.height / 2 + 20, (s / 2) - 24, Math.PI * 0.75, (0.75 + (1.5 * normalizedV)) * Math.PI);
-    this.ctx.stroke();
-  }
+    ctx.arc(canvas.width / 2, canvas.height / 2 + 20, (s / 2) - 24, Math.PI * 0.75, (0.75 + (1.5 * normalizedV)) * Math.PI);
+    ctx.stroke();
+  };
 
-  setValue(v: number): void {
+  element.setValue = function(v: number): void {
     this.value = v;
     const gaugeA = this.getElementsByClassName("td_gauge_a")[0] as HTMLElement;
     gaugeA.innerHTML = formatText(v);
-    this.draw();
-  }
+    this.draw!();
+  };
+
+  setTimeout(() => element.draw!(), 100);
+  element.onresize = () => element.draw!();
+  
+  return element;
 }
 
-class PointerGaugeElement extends BaseElement {
-  value: number = 0;
-  min: number = 0;
-  max: number = 1;
-  colors: string[] = ["#4DDB67", "#D4DB4D", "#DB4D4D"];
-  ratios: number[] = [];
+function createPointerGaugeElement(opts: GaugeOptions): TDElement {
+  const element = createBaseElement("pointer_gauge", opts);
+  const gaugeOpts = element.opts as GaugeOptions;
+  element.value = (gaugeOpts.value === undefined) ? 0 : gaugeOpts.value;
+  element.min = (gaugeOpts.min === undefined) ? 0 : gaugeOpts.min;
+  element.max = (gaugeOpts.max === undefined) ? 1 : gaugeOpts.max;
+  
+  const colors = gaugeOpts.colors || ["#4DDB67", "#D4DB4D", "#DB4D4D"];
+  const ratios = gaugeOpts.ratios || [];
 
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
+  element.innerHTML = `<div class="td_gauge"><span>${gaugeOpts.label}</span><canvas></canvas><div class="td_gauge_a">${formatText(element.value!)}</div></div>`;
+  
+  const canvas = element.getElementsByTagName("canvas")[0] as HTMLCanvasElement;
+  const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 
-  constructor(opts: GaugeOptions) {
-    super("pointer_gauge", opts);
-    const gaugeOpts = this.opts as GaugeOptions;
-    this.value = (gaugeOpts.value === undefined) ? 0 : gaugeOpts.value;
-    this.min = (gaugeOpts.min === undefined) ? 0 : gaugeOpts.min;
-    this.max = (gaugeOpts.max === undefined) ? 1 : gaugeOpts.max;
-    if (gaugeOpts.colors) this.colors = gaugeOpts.colors;
-    if (gaugeOpts.ratios) this.ratios = gaugeOpts.ratios;
-    this.innerHTML = `<div class="td_gauge"><span>${gaugeOpts.label}</span><canvas></canvas><div class="td_gauge_a">${formatText(this.value)}</div></div>`;
-    this.canvas = this.getElementsByTagName("canvas")[0] as HTMLCanvasElement;
-    this.ctx = this.canvas.getContext("2d") as CanvasRenderingContext2D;
-
-    setTimeout(() => this.draw(), 100);
-    this.onresize = () => this.draw();
-  }
-
-  draw(): void {
-    this.canvas.width = this.canvas.clientWidth;
-    this.canvas.height = this.canvas.clientHeight;
-    const s = Math.min(this.canvas.width, this.canvas.height);
-    this.ctx.lineCap = "square";
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.ctx.beginPath();
-    this.ctx.lineWidth = 20;
-    this.ctx.strokeStyle = "#000";
-    this.ctx.arc(this.canvas.width / 2, this.canvas.height / 2 + 20, (s / 2) - 24, Math.PI * 0.75, 2.25 * Math.PI);
-    this.ctx.stroke();
+  element.draw = function(): void {
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+    const s = Math.min(canvas.width, canvas.height);
+    ctx.lineCap = "square";
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.lineWidth = 20;
+    ctx.strokeStyle = "#000";
+    ctx.arc(canvas.width / 2, canvas.height / 2 + 20, (s / 2) - 24, Math.PI * 0.75, 2.25 * Math.PI);
+    ctx.stroke();
 
     // Determine the actual number of segments to draw
-    const numSegments = Math.min(this.colors.length, this.ratios.length > 0 ? this.ratios.length : this.colors.length);
+    const numSegments = Math.min(colors.length, ratios.length > 0 ? ratios.length : colors.length);
 
     // If ratios are not explicitly provided or are insufficient, fill with 1s up to numSegments
     const effectiveRatios: number[] = [];
     for (let i = 0; i < numSegments; i++) {
-      effectiveRatios.push(this.ratios[i] !== undefined ? this.ratios[i] : 1);
+      effectiveRatios.push(ratios[i] !== undefined ? ratios[i] : 1);
     }
 
     const totalRatio = effectiveRatios.reduce((sum, r) => sum + r, 0);
@@ -425,76 +413,74 @@ class PointerGaugeElement extends BaseElement {
     let currentAngle = startAngle;
     for (let i = 0; i < numSegments; i++) {
       const segmentAngle = (effectiveRatios[i] / safeTotalRatio) * totalArcAngle;
-      this.ctx.beginPath();
-      this.ctx.lineWidth = 16;
-      this.ctx.strokeStyle = this.colors[i];
-      this.ctx.arc(this.canvas.width / 2, this.canvas.height / 2 + 20, (s / 2) - 24, currentAngle, currentAngle + segmentAngle);
-      this.ctx.stroke();
+      ctx.beginPath();
+      ctx.lineWidth = 16;
+      ctx.strokeStyle = colors[i];
+      ctx.arc(canvas.width / 2, canvas.height / 2 + 20, (s / 2) - 24, currentAngle, currentAngle + segmentAngle);
+      ctx.stroke();
       currentAngle += segmentAngle;
     }
 
     // Draw pointer
-    this.ctx.beginPath();
-    this.ctx.lineWidth = 3;
-    this.ctx.strokeStyle = "#000";
-    let v_normalized = ((this.value || 0) - this.min) / (this.max - this.min);
+    ctx.beginPath();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#000";
+    let v_normalized = ((this.value || 0) - this.min!) / (this.max! - this.min!);
     if (v_normalized < 0) v_normalized = 0;
     if (v_normalized > 1) v_normalized = 1;
     const angle = (0.75 + (1.5 * v_normalized)) * Math.PI;
     const pointerLength = (s / 2) - 24;
-    const centerX = this.canvas.width / 2;
-    const centerY = this.canvas.height / 2 + 20;
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2 + 20;
     const pointerX = centerX + pointerLength * Math.cos(angle);
     const pointerY = centerY + pointerLength * Math.sin(angle);
-    this.ctx.moveTo(centerX, centerY);
-    this.ctx.lineTo(pointerX, pointerY);
-    this.ctx.stroke();
+    ctx.moveTo(centerX, centerY);
+    ctx.lineTo(pointerX, pointerY);
+    ctx.stroke();
 
     // Draw center circle
-    this.ctx.beginPath();
-    this.ctx.arc(centerX, centerY, 5, 0, 2 * Math.PI);
-    this.ctx.fillStyle = "#000";
-    this.ctx.fill();
-  }
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 5, 0, 2 * Math.PI);
+    ctx.fillStyle = "#000";
+    ctx.fill();
+  };
 
-  setValue(v: number): void {
+  element.setValue = function(v: number): void {
     this.value = v;
     const gaugeA = this.getElementsByClassName("td_gauge_a")[0] as HTMLElement;
     gaugeA.innerHTML = formatText(v);
-    this.draw();
-  }
+    this.draw!();
+  };
+
+  setTimeout(() => element.draw!(), 100);
+  element.onresize = () => element.draw!();
+  
+  return element;
 }
 
-class GraphElement extends BaseElement {
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
+function createGraphElement(opts: GraphOptions): TDElement {
+  const element = createBaseElement("graph", opts);
+  element.innerHTML = `<div class="td_graph"><span>${opts.label}</span><canvas></canvas></div>`;
+  
+  const canvas = element.getElementsByTagName("canvas")[0] as HTMLCanvasElement;
+  const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
 
-  constructor(opts: GraphOptions) {
-    super("graph", opts);
-    this.innerHTML = `<div class="td_graph"><span>${opts.label}</span><canvas></canvas></div>`;
-    this.canvas = this.getElementsByTagName("canvas")[0] as HTMLCanvasElement;
-    this.ctx = this.canvas.getContext("2d") as CanvasRenderingContext2D;
-
-    setTimeout(() => this.draw(), 100);
-    this.onresize = () => this.draw();
-  }
-
-  setData(d: any[] | { [key: string]: number }[]): void {
+  element.setData = function(d: any[] | { [key: string]: number }[]): void {
     this.opts.data = d;
-    this.draw();
-  }
+    this.draw!();
+  };
 
-  draw(): void {
-    this.canvas.width = this.canvas.clientWidth;
-    this.canvas.height = this.canvas.clientHeight;
-    const s = Math.min(this.canvas.width, this.canvas.height);
+  element.draw = function(): void {
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+    const s = Math.min(canvas.width, canvas.height);
     const xbase = 18;
-    const ybase = this.canvas.height - 18;
-    const xs = (this.canvas.width - 8 - xbase);
+    const ybase = canvas.height - 18;
+    const xs = (canvas.width - 8 - xbase);
     const ys = (ybase - 28);
-    this.ctx.font = "8px Sans";
-    this.ctx.fillStyle = "#000";
-    this.ctx.fillRect(4, 24, this.canvas.width - 8, this.canvas.height - 28);
+    ctx.font = "8px Sans";
+    ctx.fillStyle = "#000";
+    ctx.fillRect(4, 24, canvas.width - 8, canvas.height - 28);
     let dxmin: number | undefined, dxmax: number | undefined, dymin: number | undefined, dymax: number | undefined;
     const graphOpts = this.opts as GraphOptions;
     if (this.opts.data !== undefined) {
@@ -522,102 +508,105 @@ class GraphElement extends BaseElement {
         function getx(x: number): number { return xbase + (xs * (x - dxmin!) / safeDxs); }
         function gety(y: number): number { return ybase - (ys * (y - dymin!) / safeDys); }
         traces.forEach((trace: any, idx: number) => {
-          this.ctx.beginPath();
-          this.ctx.strokeStyle = (traces.length > 1) ? `hsl(${(idx * 360 / traces.length)}, 100%, 50%)` : "#09F";
+          ctx.beginPath();
+          ctx.strokeStyle = (traces.length > 1) ? `hsl(${(idx * 360 / traces.length)}, 100%, 50%)` : "#09F";
           let first = true;
           for (const i in trace) {
             const key = parseFloat(i);
             const val = parseFloat(trace[i]);
             if (first) {
-              this.ctx.moveTo(getx(key), gety(val));
+              ctx.moveTo(getx(key), gety(val));
               first = false;
             } else {
-              this.ctx.lineTo(getx(key), gety(val));
+              ctx.lineTo(getx(key), gety(val));
             }
           }
-          this.ctx.stroke();
+          ctx.stroke();
         });
-        this.ctx.fillStyle = "#fff";
+        ctx.fillStyle = "#fff";
         if (graphOpts.gridy) {
-          this.ctx.textAlign = "right";
+          ctx.textAlign = "right";
           for (let i = dymin; i <= dymax; i += graphOpts.gridy) {
             const y = gety(i);
             const t = graphOpts.ylabel ? graphOpts.ylabel(i) : i.toString();
-            this.ctx.fillRect(xbase - 1, y, 3, 1);
-            if (y > this.ctx.measureText(t).width / 2) { // does it fit?
-              this.ctx.fillText(t, xbase - 5, y + 2);
+            ctx.fillRect(xbase - 1, y, 3, 1);
+            if (y > ctx.measureText(t).width / 2) { // does it fit?
+              ctx.fillText(t, xbase - 5, y + 2);
             }
           }
         }
         if (graphOpts.gridx) {
           const gx = graphOpts.gridx;
-          this.ctx.textAlign = "center";
+          ctx.textAlign = "center";
           for (let i = gx * Math.ceil(dxmin! / gx); i <= dxmax!; i += gx) {
             const x = getx(i);
             const t = graphOpts.xlabel ? graphOpts.xlabel(i) : i.toString();
-            this.ctx.fillRect(x, ybase - 1, 1, 3);
-            this.ctx.fillText(t, x, ybase + 10);
+            ctx.fillRect(x, ybase - 1, 1, 3);
+            ctx.fillText(t, x, ybase + 10);
           }
         }
       }
     } else {
-      this.ctx.fillStyle = "#888";
-      this.ctx.textAlign = "center";
-      this.ctx.fillText("[No Data]", xbase + (xs / 2), ybase - (ys / 2));
+      ctx.fillStyle = "#888";
+      ctx.textAlign = "center";
+      ctx.fillText("[No Data]", xbase + (xs / 2), ybase - (ys / 2));
     }
     // axes
-    this.ctx.beginPath();
-    this.ctx.strokeStyle = "#fff";
-    this.ctx.moveTo(xbase, ybase - ys);
-    this.ctx.lineTo(xbase, ybase + 10);
-    this.ctx.moveTo(xbase - 10, ybase);
-    this.ctx.lineTo(xbase + xs, ybase);
-    this.ctx.stroke();
-  }
+    ctx.beginPath();
+    ctx.strokeStyle = "#fff";
+    ctx.moveTo(xbase, ybase - ys);
+    ctx.lineTo(xbase, ybase + 10);
+    ctx.moveTo(xbase - 10, ybase);
+    ctx.lineTo(xbase + xs, ybase);
+    ctx.stroke();
+  };
+
+  setTimeout(() => element.draw!(), 100);
+  element.onresize = () => element.draw!();
+  
+  return element;
 }
 
-class LogElement extends BaseElement {
-  private logDiv: HTMLElement;
+function createLogElement(opts: LogOptions): TDElement {
+  const element = createBaseElement("log", opts);
+  const logOpts = element.opts as LogOptions;
+  logOpts.text = logOpts.text || "";
+  element.innerHTML = `<div class="td_log"><span>${opts.label}</span><div class="td_log_a td_scrollable"></div></div>`;
+  
+  const logDiv = element.getElementsByClassName("td_log_a")[0] as HTMLElement;
 
-  constructor(opts: LogOptions) {
-    super("log", opts);
+  element.update = function(): void {
     const logOpts = this.opts as LogOptions;
-    logOpts.text = logOpts.text || "";
-    this.innerHTML = `<div class="td_log"><span>${opts.label}</span><div class="td_log_a td_scrollable"></div></div>`;
-    this.logDiv = this.getElementsByClassName("td_log_a")[0] as HTMLElement;
-    this.update();
-  }
+    logDiv.innerHTML = (logOpts.text || "").replace(/\n/g, "<br/>\n");
+  };
 
-  update(): void {
-    const logOpts = this.opts as LogOptions;
-    this.logDiv.innerHTML = (logOpts.text || "").replace(/\n/g, "<br/>\n");
-  }
-
-  log(txt: string): void {
+  element.log = function(txt: string): void {
     const logOpts = this.opts as LogOptions;
     logOpts.text = (logOpts.text || "") + "\n" + txt;
-    this.update();
-    this.logDiv.scrollTop = this.logDiv.scrollHeight;
-  }
+    this.update!();
+    logDiv.scrollTop = logDiv.scrollHeight;
+  };
 
-  clear(): void {
+  element.clear = function(): void {
     const logOpts = this.opts as LogOptions;
     logOpts.text = "";
-    this.update();
-  }
+    this.update!();
+  };
+
+  element.update();
+  return element;
 }
 
-class ModalElement extends BaseElement {
-  constructor(opts: ModalOptions) {
-    super("modal", opts);
-    this.innerHTML = `<div class="td_modal"><span>${opts.label}</span></div>`;
-    this.onclick = () => {
-      togglePressed(this);
-      if (!this.opts.onchange) {
-        this.remove();
-      }
-    };
-  }
+function createModalElement(opts: ModalOptions): TDElement {
+  const element = createBaseElement("modal", opts);
+  element.innerHTML = `<div class="td_modal"><span>${opts.label}</span></div>`;
+  element.onclick = () => {
+    togglePressed(element);
+    if (!element.opts.onchange) {
+      element.remove();
+    }
+  };
+  return element;
 }
 
 // Basic polling mechanism for dashboard data

@@ -1,3 +1,4 @@
+"use strict";
 /* Copyright (c) 2017, Gordon Williams, MPLv2 License. https://github.com/espruino/TinyDash */
 function createBaseElement(type, opts) {
     const element = document.createElement('div');

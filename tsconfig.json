@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    /* Enable all strict type-checking options */
+    "strict": true,
+    /* Additional recommended settings */
+    "target": "es2017",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}
