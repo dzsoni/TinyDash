@@ -10,16 +10,17 @@
    <script>
      var data = [];
      for (var i=0;i<100;i++) data.push(Math.cos(i/10));
+     var tinydash  = TD;
      var o = {
-       l:TD.label({x:10,y:10,width:200,height:130,label:"Test Page"}),
-       t:TD.toggle({x:10,y:150,width:200,height:60,label:"Toggle",value:1,name:"toggle"}),
-       v:TD.value({x:10,y:220,width:200,height:60,label:"Value",value:"1.234"}),
-       b:TD.button({x:10,y:290,width:200,height:100,label:"Press Me",value:0,name:"button",onchange:function(e){o.log.log("Pressed!");}}),
-       g:TD.pointer_gauge({x:220,y:400,width:200,height:200,label:"Pointer Gauge",value:25,min:0,max:100,name:"pointer_gauge",colors:["#4DDB67","#D4DB4D","#DB4D4D"],ratios:[3,1,1]}),
-       g2:TD.gauge({x:220,y:10,width:200,height:200,label:"Original Gauge",value:25,min:0,max:100,name:"original_gauge"}),
-       gr:TD.graph({x:220,y:220,width:400,height:170,label:"A Graph",data:data}),
-       log:TD.log({x:430,y:10,width:190,height:200,label:"A Log",text:"A\nB\nC"}),
-       vs:TD.value({x:10,y:400,width:200,height:60,name:"steppable_value",label:"Steppable Value",value:"1.2",min:1,step:0.1,max:2}),
+       l:tinydash.label({x:10,y:10,width:200,height:130,label:"Test Page"}),
+       t:tinydash.toggle({x:10,y:150,width:200,height:60,label:"Toggle",value:1,name:"toggle"}),
+       v:tinydash.value({x:10,y:220,width:200,height:60,label:"Value",value:"1.234"}),
+       b:tinydash.button({x:10,y:290,width:200,height:100,label:"Press Me",value:0,name:"button",onchange:function(e){o.log.log("Pressed!");}}),
+       g:tinydash.pointer_gauge({x:220,y:400,width:200,height:200,label:"Pointer Gauge",value:25,min:0,max:100,name:"pointer_gauge",colors:["#4DDB67","#D4DB4D","#DB4D4D"],ratios:[3,1,1]}),
+       g2:tinydash.gauge({x:220,y:10,width:200,height:200,label:"Original Gauge",value:25,min:0,max:100,name:"original_gauge"}),
+       gr:tinydash.graph({x:220,y:220,width:400,height:170,label:"A Graph",data:data}),
+       log:tinydash.log({x:430,y:10,width:190,height:200,label:"A Log",text:"A\nB\nC"}),
+       vs:tinydash.value({x:10,y:400,width:200,height:60,name:"steppable_value",label:"Steppable Value",value:"1.2",min:1,step:0.1,max:2}),
        //modal:TD.modal({x:10,y:10,width:400,height:400,label:"Click to connect",onchange:function(el) {o.log.log("Modal clicked");el.remove()}})
      };
      o.log.log("Hello");
