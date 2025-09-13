@@ -52,10 +52,14 @@ body {
   padding: 10px;
   cursor: pointer;
   user-select: none;
+  transition: background-color 200ms ease-out;
 }
 .td_btn_a:hover { background-color: #036; }
-.td_btn[pressed="1"] .td_btn_a { color: #09F; }
-.td_btn[pressed="1"] .td_btn_a:hover { background-color: #06B; }
+.td_button[pressed="1"] .td_btn_a {
+  color: #09F;
+  background-color: #09F;
+}
+.td_button[pressed="1"] .td_btn_a:hover { background-color: #06B; }
 .td_toggle_a {
   margin-top: 20px;
   margin-left: auto; margin-right: auto; /* centered */

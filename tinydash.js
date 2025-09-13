@@ -145,7 +145,7 @@ function createButtonElement(opts) {
     const glyph = opts.glyph || "&#x1f4a1;";
     element.innerHTML = `<div class="td_btn" pressed="${pressed}"><span>${opts.label}</span><div class="td_btn_a">${glyph}</div></div>`;
     element.pressed = Boolean(pressed);
-    element.toggle = opts.toggle;
+    element.toggle = false;
     const btnA = element.getElementsByClassName("td_btn_a")[0];
     btnA.onclick = () => togglePressed(element);
     element.setValue = function (v) {
