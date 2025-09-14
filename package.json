@@ -1,0 +1,11 @@
+{
+  "name": "tinydash",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsc && terser tinydash.js -o tinydash.js --compress --mangle"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "terser": "^5.0.0"
+  }
+}

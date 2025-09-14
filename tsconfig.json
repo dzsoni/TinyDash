@@ -1,13 +1,12 @@
 {
   "compilerOptions": {
-    /* Enable all strict type-checking options */
     "strict": true,
-    /* Additional recommended settings */
     "target": "es2017",
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "esModuleInterop": true,
+    "module": "none",
+    "outFile": "tinydash.js",
+    "removeComments": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
-  }
+  },
+  "files": ["src/tinydash.ts"]
 }
