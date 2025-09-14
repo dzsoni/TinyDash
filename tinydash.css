@@ -31,11 +31,22 @@ body {
 .td_label {
   display: table;
   text-align: center;
+  width: 100%;
+  height: 100%;
 }
 .td_label span {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  color: #888;
+  font-size: 12px;
+}
+.td_label_text {
   display: table-cell;
   vertical-align: middle;
   font-size: 20px;
+  color: #09F;
+  font-weight: bold;
 }
 
 .td_btn_a {
@@ -97,7 +108,7 @@ body {
   display:inline-block;
 }
 .td_val_a {
-  margin-top: 20px;
+  margin-top: 25px;
   font-size: 20px;
   color: #09F;
 }

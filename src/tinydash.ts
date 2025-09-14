@@ -21,21 +21,30 @@ interface BaseElementOptions {
   onchange?: (el: TDElement, value: any) => void;
 }
 
-interface LabelOptions extends BaseElementOptions {
-  label: string;
+interface TextOptions extends BaseElementOptions {
+  label?: string;
+  text?: string;
 }
 
 interface ButtonOptions extends BaseElementOptions {
-  label: string;
+  label?: string;
   glyph?: string;
 }
 
 interface ToggleOptions extends BaseElementOptions {
-  label: string;
+  label?: string;
   value: boolean;
 }
 
-interface ValueOptions extends BaseElementOptions {
+interface ValueSteppableOptions extends BaseElementOptions {
+  label?: string;
+  value: number;
+  step: number;
+  min: number;
+  max: number;
+}
+
+interface ValueSliderOptions extends BaseElementOptions {
   label: string;
   value: number;
   step?: number;
@@ -109,8 +118,8 @@ class TD {
     }
   }
 
-  static label(opts: LabelOptions): TDElement {
-    return createLabelElement(opts);
+  static text(opts: TextOptions): TDElement {
+    return createTextElement(opts);
   }
 
   static button(opts: ButtonOptions): TDElement {
@@ -121,8 +130,8 @@ class TD {
     return createToggleElement(opts);
   }
 
-  static value(opts: ValueOptions): TDElement {
-    return createValueElement(opts);
+  static value_steppable(opts: ValueSteppableOptions): TDElement {
+    return createValueSteppableElement(opts);
   }
 
   static gauge(opts: GaugeOptions): TDElement {
@@ -234,9 +243,22 @@ async function handleChange(data: { [key: string]: any }): Promise<void> {
   await sendCommand("update", "POST", data);
 }
 
-function createLabelElement(opts: LabelOptions): TDElement {
+function createTextElement(opts: TextOptions): TDElement {
   const element = createBaseElement("label", opts);
-  element.innerHTML = `<div class="td_label"><span>${opts.label}</span></div>`;
+  const textContent = opts.text ? `<div class="td_label_text">${opts.text}</div>` : '<div class="td_label_text"></div>';
+  element.innerHTML = `<div class="td_label"><span>${opts.label || ''}</span>${textContent}</div>`;
+  
+  element.setValue = function(v: string): void {
+    let textDiv = this.getElementsByClassName("td_label_text")[0] as HTMLElement;
+    if (!textDiv) {
+      // Create text div if it doesn't exist
+      textDiv = document.createElement('div');
+      textDiv.className = 'td_label_text';
+      this.querySelector('.td_label')!.appendChild(textDiv);
+    }
+    textDiv.innerHTML = String(v);
+  };
+  
   return element;
 }
 
@@ -246,7 +268,6 @@ function createButtonElement(opts: ButtonOptions): TDElement {
   const glyph = opts.glyph || "&#x1f4a1;";
   element.innerHTML = `<div class="td_btn" pressed="${pressed}"><span>${opts.label}</span><div class="td_btn_a">${glyph}</div></div>`;
   element.pressed = Boolean(pressed);
-  
 
   const btnA = element.getElementsByClassName("td_btn_a")[0] as HTMLElement;
   btnA.onclick = () => buttonPressed(element);
@@ -256,7 +277,6 @@ function createButtonElement(opts: ButtonOptions): TDElement {
     this.pressed = v;
     this.setAttribute("pressed", this.pressed ? "1" : "0");
   };
-
   return element;
 }
 
@@ -278,31 +298,28 @@ function createToggleElement(opts: ToggleOptions): TDElement {
   return element;
 }
 
-function createValueElement(opts: ValueOptions): TDElement {
-  const element = createBaseElement("value", opts);
-  const valueOpts = element.opts as ValueOptions;
+function createValueSteppableElement(opts: ValueSteppableOptions): TDElement {
+  const element = createBaseElement("steppablevalue", opts);
+  const valueOpts = element.opts as ValueSteppableOptions;
   element.value = parseFloat(String(valueOpts.value));
   element.min = valueOpts.min;
   element.max = valueOpts.max;
   element.step = valueOpts.step;
 
   let html: string;
-  if (element.step !== undefined) {
-    html = '<div class="td_val_b">&#9664;</div><div class="td_val_a"></div><div class="td_val_b">&#9654;</div>';
-  } else {
-    html = '<div class="td_val_a"></div>';
-  }
+  html = '<div class="td_val_b">&#9664;</div><div class="td_val_a"></div><div class="td_val_b">&#9654;</div>';
+
   element.innerHTML = `<div class="td_val"><span>${valueOpts.label}</span>${html}</div>`;
 
-  if (element.step !== undefined) {
-    const b = element.getElementsByClassName("td_val_b") as HTMLCollectionOf<HTMLElement>;
-    b[0].onclick = () => {
+  
+  const b = element.getElementsByClassName("td_val_b") as HTMLCollectionOf<HTMLElement>;
+  b[0].onclick = () => {
       element.setValue!(element.value! - element.step!);
-    };
-    b[1].onclick = () => {
+  };
+  b[1].onclick = () => {
       element.setValue!(element.value! + element.step!);
-    };
-  }
+  };
+  
 
   element.setValue = function(v: number): void {
     if (this.min !== undefined && v < this.min) v = this.min;
