@@ -16,7 +16,7 @@ interface BaseElementOptions {
   y: number;
   width: number;
   height: number;
-  name?: string;
+  name: string;
   data?: any[] | { [key: string]: number }[];
   onchange?: (el: TDElement, value: any) => void;
 }
@@ -74,7 +74,6 @@ interface TDElement extends HTMLElement {
   opts: BaseElementOptions;
   setValue?: (v: any) => void;
   pressed?: boolean;
-  toggle?: boolean;
   value?: number;
   min?: number;
   max?: number;
@@ -200,16 +199,25 @@ function togglePressed(el: TDElement): void {
   if (el.type === "toggle") {
     const toggleDiv = el.getElementsByClassName("td_toggle")[0] as HTMLElement;
     toggleDiv.setAttribute("pressed", el.pressed ? "1" : "0");
-  } else {
+  }
+  sendChanges(el, el.pressed); 
+}
+
+function buttonPressed(el: TDElement): void {
+  el.pressed = !el.pressed;
+  if(el.type === "button") {
     el.setAttribute("pressed", el.pressed ? "1" : "0");
   }
   sendChanges(el, el.pressed);
-  if (!el.toggle) {
-        el.pressed = false;
-        setTimeout(function () {
-                el.setAttribute("pressed", "0");  
-        }, 200);
-    }
+  el.pressed = false;
+  setTimeout(function () {
+  el.setAttribute("pressed", "0");  
+  }, 200);  
+}
+function buttonMousedown(el: TDElement): void {
+  if(el.type === "button") {
+    el.setAttribute("pressed", "1");
+  }
 }
 
 function formatText(txt: any): string {
@@ -238,10 +246,11 @@ function createButtonElement(opts: ButtonOptions): TDElement {
   const glyph = opts.glyph || "&#x1f4a1;";
   element.innerHTML = `<div class="td_btn" pressed="${pressed}"><span>${opts.label}</span><div class="td_btn_a">${glyph}</div></div>`;
   element.pressed = Boolean(pressed);
-  element.toggle = Boolean(false);
+  
 
   const btnA = element.getElementsByClassName("td_btn_a")[0] as HTMLElement;
-  btnA.onclick = () => togglePressed(element);
+  btnA.onclick = () => buttonPressed(element);
+  btnA.onmousedown = () => buttonMousedown(element);
 
   element.setValue = function(v: boolean): void {
     this.pressed = v;
@@ -256,7 +265,6 @@ function createToggleElement(opts: ToggleOptions): TDElement {
   const pressed = opts.value ? 1 : 0;
   element.innerHTML = `<div class="td_toggle" pressed="${pressed}"><span>${opts.label}</span><div class="td_toggle_a"><div class="td_toggle_b"></div></div></div>`;
   element.pressed = Boolean(pressed);
-  element.toggle = true;
 
   const toggleA = element.getElementsByClassName("td_toggle_a")[0] as HTMLElement;
   toggleA.onclick = () => togglePressed(element);
