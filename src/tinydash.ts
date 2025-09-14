@@ -28,13 +28,11 @@ interface LabelOptions extends BaseElementOptions {
 interface ButtonOptions extends BaseElementOptions {
   label: string;
   glyph?: string;
-  value?: boolean;
-  toggle?: boolean;
 }
 
 interface ToggleOptions extends BaseElementOptions {
   label: string;
-  value?: boolean;
+  value: boolean;
 }
 
 interface ValueOptions extends BaseElementOptions {
@@ -199,27 +197,19 @@ function sendChanges(el: TDElement, value: any): void {
 function togglePressed(el: TDElement): void {
   el.pressed = !el.pressed;
   
-  // For toggle elements, set pressed attribute on the inner td_toggle div
   if (el.type === "toggle") {
     const toggleDiv = el.getElementsByClassName("td_toggle")[0] as HTMLElement;
     toggleDiv.setAttribute("pressed", el.pressed ? "1" : "0");
   } else {
-    // For buttons, set on the outer element
     el.setAttribute("pressed", el.pressed ? "1" : "0");
   }
-  
   sendChanges(el, el.pressed);
   if (!el.toggle) {
-    el.pressed = false;
-    setTimeout(function() {
-      if (el.type === "toggle") {
-        const toggleDiv = el.getElementsByClassName("td_toggle")[0] as HTMLElement;
-        toggleDiv.setAttribute("pressed", "0");
-      } else {
-        el.setAttribute("pressed", "0");
-      }
-    }, 200);
-  }
+        el.pressed = false;
+        setTimeout(function () {
+                el.setAttribute("pressed", "0");  
+        }, 200);
+    }
 }
 
 function formatText(txt: any): string {
@@ -244,11 +234,11 @@ function createLabelElement(opts: LabelOptions): TDElement {
 
 function createButtonElement(opts: ButtonOptions): TDElement {
   const element = createBaseElement("button", opts);
-  const pressed = opts.value ? 1 : 0;
+  const pressed = 0;
   const glyph = opts.glyph || "&#x1f4a1;";
   element.innerHTML = `<div class="td_btn" pressed="${pressed}"><span>${opts.label}</span><div class="td_btn_a">${glyph}</div></div>`;
   element.pressed = Boolean(pressed);
-  element.toggle = opts.toggle;
+  element.toggle = Boolean(false);
 
   const btnA = element.getElementsByClassName("td_btn_a")[0] as HTMLElement;
   btnA.onclick = () => togglePressed(element);

@@ -96,26 +96,18 @@ function sendChanges(el, value) {
 }
 function togglePressed(el) {
     el.pressed = !el.pressed;
-    // For toggle elements, set pressed attribute on the inner td_toggle div
     if (el.type === "toggle") {
         const toggleDiv = el.getElementsByClassName("td_toggle")[0];
         toggleDiv.setAttribute("pressed", el.pressed ? "1" : "0");
     }
     else {
-        // For buttons, set on the outer element
         el.setAttribute("pressed", el.pressed ? "1" : "0");
     }
     sendChanges(el, el.pressed);
     if (!el.toggle) {
         el.pressed = false;
         setTimeout(function () {
-            if (el.type === "toggle") {
-                const toggleDiv = el.getElementsByClassName("td_toggle")[0];
-                toggleDiv.setAttribute("pressed", "0");
-            }
-            else {
-                el.setAttribute("pressed", "0");
-            }
+            el.setAttribute("pressed", "0");
         }, 200);
     }
 }
@@ -141,11 +133,11 @@ function createLabelElement(opts) {
 }
 function createButtonElement(opts) {
     const element = createBaseElement("button", opts);
-    const pressed = opts.value ? 1 : 0;
+    const pressed = 0;
     const glyph = opts.glyph || "&#x1f4a1;";
     element.innerHTML = `<div class="td_btn" pressed="${pressed}"><span>${opts.label}</span><div class="td_btn_a">${glyph}</div></div>`;
     element.pressed = Boolean(pressed);
-    element.toggle = false;
+    element.toggle = Boolean(false);
     const btnA = element.getElementsByClassName("td_btn_a")[0];
     btnA.onclick = () => togglePressed(element);
     element.setValue = function (v) {

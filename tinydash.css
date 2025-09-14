@@ -37,8 +37,7 @@ body {
   vertical-align: middle;
   font-size: 20px;
 }
-.td_btn {
-}
+
 .td_btn_a {
   margin-top: 20px;
   margin-left: auto; margin-right: auto; /* centered */
@@ -52,7 +51,6 @@ body {
   padding: 10px;
   cursor: pointer;
   user-select: none;
-  transition: background-color 200ms ease-out;
 }
 .td_btn_a:hover { background-color: #036; }
 .td_button[pressed="1"] .td_btn_a {
@@ -62,17 +60,17 @@ body {
 .td_button[pressed="1"] .td_btn_a:hover { background-color: #06B; }
 .td_toggle_a {
   margin-top: 20px;
-  margin-left: auto; margin-right: auto; /* centered */
+  margin-left: auto; margin-right: auto;
   border: 2px solid #888;
   border-radius: 16px;
   width: 50px;
   height: 28px;
 }
 .td_toggle_a:hover {
-  background-color: #06B;
+  background-color: #036;
 }
 .td_toggle_b:hover {
-  background-color: #06B;
+  background-color: #888;
 }
 .td_toggle_b {
   background-color: #888;
@@ -112,7 +110,7 @@ body {
   user-select: none;
 }
 .td_val_b:hover {
-  color:#fff;
+  color:#06B;
 }
 
 
